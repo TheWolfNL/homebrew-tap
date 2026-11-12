@@ -11,6 +11,7 @@ If Homebrew refuses to load casks from an untrusted tap, run `brew trust thewolf
 | Cask | Description | Source |
 |---|---|---|
 | `yubi-ki-yay` | Menu bar app that alerts when a YubiKey is waiting for a touch | [TheWolfNL/yubi-ki-yay](https://github.com/TheWolfNL/yubi-ki-yay) |
+| `botler` | Menu bar butler that alerts when an AI coding agent is done or needs input | [TheWolfNL/botler](https://github.com/TheWolfNL/botler) |
 
 ```bash
 brew install --cask thewolfnl/tap/<cask>

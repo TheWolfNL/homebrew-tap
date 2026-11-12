@@ -1,6 +1,6 @@
 cask "botler" do
-  version "0.1.0"
-  sha256 "798bd5701e181aefeb6a79b5e573a50f487d54904243468b757c17d70c638e1a"
+  version "0.1.1"
+  sha256 "178ae43015ddc8dcd0ab36d008df52d58622296c1ab005fc5cb4ba0aac39795b"
 
   url "https://github.com/TheWolfNL/botler/releases/download/v#{version}/Botler-#{version}-universal.zip"
   name "Botler"

@@ -1,0 +1,65 @@
+name: Bump cask
+
+on:
+  repository_dispatch:
+    types: [bump-cask]
+  workflow_dispatch:
+    inputs:
+      cask:
+        description: "Cask name, e.g. yubi-ki-yay"
+        required: true
+      version:
+        description: "Released version without the v prefix, e.g. 0.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bump-cask
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    env:
+      NAME: ${{ github.event.client_payload.cask || inputs.cask }}
+      VERSION: ${{ github.event.client_payload.version || inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate input
+        run: |
+          [[ "$NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "invalid cask: $NAME"; exit 1; }
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || { echo "invalid version: $VERSION"; exit 1; }
+          cask="Casks/$NAME.rb"
+          [ -f "$cask" ] || { echo "no such cask: $cask"; exit 1; }
+          echo "CASK=$cask" >> "$GITHUB_ENV"
+
+      - name: Download release and compute sha256
+        run: |
+          template=$(perl -ne 'print $1 if /^\s*url "([^"]+)"/' "$CASK")
+          [ -n "$template" ] || { echo "no url in $CASK"; exit 1; }
+          url=${template//'#{version}'/$VERSION}
+          file="$RUNNER_TEMP/download"
+          curl -fsSL -o "$file" "$url"
+          sha=$(sha256sum "$file" | cut -d' ' -f1)
+          if curl -fsSL -o "$file.sha256" "$url.sha256"; then
+            published=$(cut -d' ' -f1 "$file.sha256")
+            [ "$sha" = "$published" ] || { echo "sha256 mismatch: $sha != $published"; exit 1; }
+          fi
+          echo "SHA256=$sha" >> "$GITHUB_ENV"
+
+      - name: Update cask
+        run: |
+          perl -pi -e 's/^  version ".*"/  version "$ENV{VERSION}"/; s/^  sha256 ".*"/  sha256 "$ENV{SHA256}"/; $_ = "" if /^  # Placeholder:/' "$CASK"
+          git diff
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$CASK"
+          git diff --cached --quiet && { echo "$NAME already at $VERSION"; exit 0; }
+          git commit -m "$NAME $VERSION"
+          git push

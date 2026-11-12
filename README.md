@@ -1,34 +1,53 @@
 # TheWolfNL Homebrew tap
 
-## Yubi Ki-Yay
-
-Menu bar app that alerts when a YubiKey is waiting for a touch. Source: [TheWolfNL/yubi-ki-yay](https://github.com/TheWolfNL/yubi-ki-yay).
-
 ```bash
-brew install --cask thewolfnl/tap/yubi-ki-yay
+brew tap thewolfnl/tap
 ```
 
-If Homebrew refuses to load the cask from an untrusted tap, run `brew trust thewolfnl/tap` first.
+If Homebrew refuses to load casks from an untrusted tap, run `brew trust thewolfnl/tap` first.
 
-This installs `Yubi Ki-Yay.app` and links the CLI as `yubikiyay`.
+## Casks
+
+| Cask | Description | Source |
+|---|---|---|
+| `yubi-ki-yay` | Menu bar app that alerts when a YubiKey is waiting for a touch | [TheWolfNL/yubi-ki-yay](https://github.com/TheWolfNL/yubi-ki-yay) |
+
+```bash
+brew install --cask thewolfnl/tap/<cask>
+```
 
 ### Quarantine
 
-The app is ad-hoc signed and not notarized. The cask removes the `com.apple.quarantine` attribute after install so Gatekeeper does not block it. If macOS still refuses to open it, run:
+These apps are ad-hoc signed and not notarized. Each cask removes the `com.apple.quarantine` attribute after install so Gatekeeper does not block it. If macOS still refuses to open one, run `xattr -dr com.apple.quarantine "/Applications/<App>.app"`.
 
-```bash
-xattr -dr com.apple.quarantine "/Applications/Yubi Ki-Yay.app"
-```
+## Updating casks
 
-`brew uninstall --zap --cask yubi-ki-yay` also removes `~/.config/yubi-ki-yay` and `~/Library/Application Support/yubi-ki-yay`.
+`.github/workflows/bump.yml` updates a cask's `version` and `sha256`. It takes a cask name and a version, fills `#{version}` into the cask's `url`, downloads the file, checks it against `<url>.sha256` when the release publishes one, and pushes the commit. It runs on:
 
-## Release process
+- a `repository_dispatch` of type `bump-cask` with payload `{"cask": "<name>", "version": "X.Y.Z"}`, sent by a project's release workflow;
+- **Actions > Bump cask > Run workflow**, or `gh workflow run bump.yml -R TheWolfNL/homebrew-tap -f cask=<name> -f version=X.Y.Z`.
 
-1. In the app repo, push a tag `vX.Y.Z`. Its release workflow attaches `Yubi-Ki-Yay-X.Y.Z-universal.zip` and `Yubi-Ki-Yay-X.Y.Z-universal.zip.sha256` to the GitHub release.
-2. In this repo, run **Actions > Bump cask > Run workflow** with version `X.Y.Z` (or `gh workflow run bump-yubi-ki-yay.yml -R TheWolfNL/homebrew-tap -f version=X.Y.Z`). It downloads the zip, checks it against the published `.sha256`, updates `version` and `sha256` in `Casks/yubi-ki-yay.rb` and pushes the commit.
+A new cask ships with a placeholder `sha256` (all zeros) until the first bump; installs fail until then.
 
-The cask ships with a placeholder `sha256` (all zeros) until the bump workflow has run for the first release; installs fail until then.
+## Adding a project
+
+1. Add `Casks/<name>.rb` with `url` containing `#{version}` and a placeholder `sha256`.
+2. In the project's release workflow, after publishing the release, send the dispatch:
+
+   ```yaml
+   - name: Bump Homebrew cask
+     env:
+       TAP_TOKEN: ${{ secrets.TAP_DISPATCH_TOKEN }}
+     run: |
+       [ -n "$TAP_TOKEN" ] || { echo "::notice::TAP_DISPATCH_TOKEN not set, skipping cask bump"; exit 0; }
+       GH_TOKEN="$TAP_TOKEN" gh api repos/TheWolfNL/homebrew-tap/dispatches \
+         -f event_type=bump-cask -f 'client_payload[cask]=<name>' -f "client_payload[version]=${VERSION}"
+   ```
+
+3. Create a fine-grained personal access token scoped to `TheWolfNL/homebrew-tap` with **Contents: Read and write**, and store it as the `TAP_DISPATCH_TOKEN` secret in the project repo.
+
+The tap needs **Settings > Actions > General > Workflow permissions: Read and write** so the bump workflow can push.
 
 ## License
 
-[PolyForm Shield 1.0.0](LICENSE.md). Required Notice: Copyright Tjeerd Ritsma (https://github.com/TheWolfNL)
+The cask definitions in this repo are [MIT](LICENSE). Each packaged project keeps its own license.

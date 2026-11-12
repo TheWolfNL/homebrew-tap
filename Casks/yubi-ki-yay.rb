@@ -1,7 +1,6 @@
 cask "yubi-ki-yay" do
   version "0.1.0"
-  # Placeholder: the "Bump cask" workflow fills this in on the first release.
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+  sha256 "f97a47085288f028db8d605bc4b717fa4b66201c7104cf277c65f629b017588e"
 
   url "https://github.com/TheWolfNL/yubi-ki-yay/releases/download/v#{version}/Yubi-Ki-Yay-#{version}-universal.zip"
   name "Yubi Ki-Yay"

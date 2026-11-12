@@ -1,6 +1,6 @@
 cask "yubi-ki-yay" do
-  version "0.1.1"
-  sha256 "582d1b8920fe9aefd5f5ff6e586d32e9f277cc21f12950a8f4b92109b1c11213"
+  version "0.2.0"
+  sha256 "3ec5029c8dd79369d2225bb3f46269c72139eea18f5c19bda82581a0352b11d4"
 
   url "https://github.com/TheWolfNL/yubi-ki-yay/releases/download/v#{version}/Yubi-Ki-Yay-#{version}-universal.zip"
   name "Yubi Ki-Yay"
